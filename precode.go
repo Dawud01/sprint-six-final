@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
 
-// Task ...
 type Task struct {
 	ID           string   `json:"id"`
 	Description  string   `json:"description"`
@@ -39,14 +39,70 @@ var tasks = map[string]Task{
 	},
 }
 
+func Delete(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := chi.URLParam(r, "id")
+	_, ok := tasks[id]
+	if !ok {
+		w.WriteHeader(400)
+		return
+	}
+	delete(tasks, id)
+	w.WriteHeader(200)
+}
+
+func getTaskId(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := chi.URLParam(r, "id")
+	task, ok := tasks[id]
+	if !ok {
+		w.WriteHeader(400)
+		return
+	}
+
+	json.NewEncoder(w).Encode(task)
+	w.WriteHeader(200)
+
+}
+
+func postTasks(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var task Task
+	err := json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(400)
+		return
+	}
+	tasks[task.ID] = task
+	defer r.Body.Close()
+	w.WriteHeader(201)
+}
+
 // Ниже напишите обработчики для каждого эндпоинта
-// ...
+func getTasks(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	result, err := json.Marshal(tasks)
+	if err != nil {
+		fmt.Println(err)
+
+		w.WriteHeader(500)
+		return
+	}
+
+	w.Write([]byte(result))
+	w.WriteHeader(200)
+
+}
 
 func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
-	// ...
+	r.Get("/tasks", getTasks)
+	r.Post("/tasks", postTasks)
+	r.Get("/tasks/{id}", getTaskId)
+	r.Delete("/tasks/{id}", Delete)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
