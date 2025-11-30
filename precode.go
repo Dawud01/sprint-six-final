@@ -44,11 +44,11 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	_, ok := tasks[id]
 	if !ok {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	delete(tasks, id)
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 }
 
 func getTaskId(w http.ResponseWriter, r *http.Request) {
@@ -56,12 +56,12 @@ func getTaskId(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	task, ok := tasks[id]
 	if !ok {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	json.NewEncoder(w).Encode(task)
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 }
 
@@ -71,12 +71,12 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
 		fmt.Println(err)
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	tasks[task.ID] = task
 	defer r.Body.Close()
-	w.WriteHeader(201)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // Ниже напишите обработчики для каждого эндпоинта
@@ -86,12 +86,12 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	w.Write([]byte(result))
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 }
 
